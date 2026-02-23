@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School Signage Bell Schedule</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Default Colors */
+            --bg-default: #0f172a;
+            /* Deep blue/slate */
+            --bg-warning: #eab308;
+            /* Yellow */
+            --bg-transition: #15803d;
+            /* Emerald Green */
+            --bg-transition-final: #b91c1c;
+            /* Crimson Red */
+            --bg-late: #b91c1c;
+            /* Crimson Red */
+            --text-main: #ffffff;
+            --text-dim: #cbd5e1;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body,
+        html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            /* Perfect for digital signage */
+            background-color: var(--bg-default);
+            color: var(--text-main);
+            transition: background-color 1s ease;
+        }
+
+        /* --- Main Signage Display --- */
+        #display-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            padding: 4vmin;
+        }
+
+        .school-name {
+            font-size: 4vmin;
+            font-weight: 600;
+            color: var(--text-dim);
+            margin-bottom: 2vmin;
+            text-transform: uppercase;
+            letter-spacing: 0.2vmin;
+        }
+
+        .clock {
+            font-size: 20vmin;
+            font-weight: 800;
+            line-height: 1;
+            text-shadow: 0 1vmin 2vmin rgba(0, 0, 0, 0.3);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .date {
+            font-size: 5vmin;
+            font-weight: 400;
+            color: var(--text-dim);
+            margin-top: 1vmin;
+            margin-bottom: 4vmin;
+        }
+
+        .message-box {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 2vmin 5vmin;
+            border-radius: 2vmin;
+            backdrop-filter: blur(5px);
+            min-height: 14vmin;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            width: 90%;
+            max-width: 1400px;
+            box-shadow: 0 1vmin 3vmin rgba(0, 0, 0, 0.2);
+        }
+
+        .state-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            padding: 2vmin 0;
+            gap: 4vmin;
+        }
+
+        .state-row:not(:last-child) {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .status {
+            font-size: 3.5vmin;
+            font-weight: 600;
+            text-align: left;
+            flex: 1;
+        }
+
+        .countdown {
+            font-size: 4.5vmin;
+            font-weight: 800;
+            color: #facc15;
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        /* --- Subtle Pulsing Animations --- */
+        @keyframes pulse-warning {
+            0% {
+                background-color: #854d0e;
+            }
+
+            50% {
+                background-color: var(--bg-warning);
+            }
+
+            100% {
+                background-color: #854d0e;
+            }
+        }
+
+        @keyframes pulse-transition {
+            0% {
+                background-color: #064e3b;
+            }
+
+            50% {
+                background-color: var(--bg-transition);
+            }
+
+            100% {
+                background-color: #064e3b;
+            }
+        }
+
+        @keyframes pulse-late {
+            0% {
+                background-color: #7f1d1d;
+            }
+
+            50% {
+                background-color: var(--bg-late);
+            }
+
+            100% {
+                background-color: #7f1d1d;
+            }
+        }
+
+        .state-warning {
+            animation: pulse-warning 4s infinite ease-in-out;
+        }
+
+        .state-transition {
+            animation: pulse-transition 3s infinite ease-in-out;
+        }
+
+        .state-transition-final {
+            background-color: var(--bg-transition-final);
+        }
+
+        .state-late {
+            animation: pulse-late 2s infinite ease-in-out;
+        }
+
+        /* --- Settings Dashboard --- */
+        #settings-btn {
+            position: absolute;
+            bottom: 2vmin;
+            right: 2vmin;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            padding: 1.5vmin;
+            border-radius: 50%;
+            cursor: pointer;
+            opacity: 0;
+            /* Hidden by default to prevent screen clutter */
+            transition: opacity 0.3s;
+            z-index: 100;
+        }
+
+        /* Shows settings button only when hovering near bottom right */
+        body:hover #settings-btn {
+            opacity: 1;
+        }
+
+        #settings-panel {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.95);
+            display: none;
+            flex-direction: column;
+            padding: 5vmin;
+            overflow-y: auto;
+            z-index: 99;
+            backdrop-filter: blur(10px);
+        }
+
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 2vmin;
+            margin-bottom: 3vmin;
+        }
+
+        .settings-header h2 {
+            font-size: 4vmin;
+        }
+
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 1.5vmin 3vmin;
+            border-radius: 1vmin;
+            font-size: 2vmin;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-close {
+            background: #475569;
+        }
+
+        .btn-close:hover {
+            background: #334155;
+        }
+
+        .btn-danger {
+            background: #dc2626;
+            padding: 1vmin 2vmin;
+            font-size: 1.5vmin;
+        }
+
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+
+        .btn-success {
+            background: #16a34a;
+        }
+
+        .btn-success:hover {
+            background: #15803d;
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 4vmin;
+        }
+
+        .config-group,
+        .schedule-group {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 3vmin;
+            border-radius: 1vmin;
+        }
+
+        label {
+            display: block;
+            font-size: 2vmin;
+            margin-bottom: 0.5vmin;
+            color: var(--text-dim);
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="time"] {
+            width: 100%;
+            padding: 1vmin;
+            margin-bottom: 2vmin;
+            border-radius: 0.5vmin;
+            border: 1px solid #475569;
+            background: #1e293b;
+            color: white;
+            font-size: 2vmin;
+        }
+
+        .period-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #1e293b;
+            padding: 1.5vmin;
+            margin-bottom: 1vmin;
+            border-radius: 0.5vmin;
+            font-size: 1.8vmin;
+        }
+
+        .add-period-form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1vmin;
+            margin-top: 2vmin;
+            background: #0f172a;
+            padding: 2vmin;
+            border-radius: 1vmin;
+            align-items: flex-end;
+        }
+
+        .add-period-form>div {
+            flex: 1;
+            min-width: 100px;
+        }
+
+        .days-selector {
+            display: flex;
+            gap: 1vmin;
+            margin-bottom: 2vmin;
+        }
+
+        .days-selector label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5vmin;
+            font-size: 1.5vmin;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Main Digital Signage View -->
+    <div id="display-container">
+        <!-- Logo Background -->
+        <div id="bg-logo"
+            style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; display: flex; align-items: center; justify-content: center; opacity: 0.15; pointer-events: none;">
+            <img src="logo.png" alt="School Logo"
+                style="max-height: 80vh; max-width: 80vw; object-fit: contain; filter: drop-shadow(0 0 2vmin rgba(0,0,0,0.5));">
+        </div>
+
+        <div class="school-name" id="display-school-name" style="z-index: 2; position: relative;">Middle School</div>
+        <div class="clock" id="display-time" style="z-index: 2; position: relative;">00:00</div>
+        <div class="date" id="display-date" style="z-index: 2; position: relative;">Loading...</div>
+
+        <div class="message-box" id="display-message-box" style="z-index: 2; position: relative;">
+            <!-- States injected via JS -->
+        </div>
+    </div>
+
+    <!-- Hover over bottom right to see this button -->
+    <button id="settings-btn" onclick="toggleSettings()">⚙️</button>
+
+    <!-- Programming Dashboard -->
+    <div id="settings-panel">
+        <div class="settings-header">
+            <h2>Signage Dashboard</h2>
+            <div style="display: flex; gap: 1vmin;">
+                <button class="btn-close" onclick="toggleSettings()">Close</button>
+                <button onclick="saveSettings()">Save Locally</button>
+                <button class="btn-success" onclick="generateUrl()">🔗 Copy Signage Link</button>
+            </div>
+        </div>
+
+        <div class="settings-grid">
+            <!-- Global Configuration -->
+            <div class="config-group">
+                <h3>Global Settings</h3><br>
+                <label>Signage / School Name</label>
+                <input type="text" id="input-school-name" placeholder="Lincoln Middle School">
+
+                <label>Pre-Transition Alert (Minutes before class ends)</label>
+                <input type="number" id="input-pre-min" min="0" max="15">
+
+                <label>"You are late" Alert (Minutes after class starts)</label>
+                <input type="number" id="input-late-min" min="0" max="15">
+            </div>
+
+            <!-- Schedule Manager -->
+            <div class="schedule-group">
+                <h3>Bell Schedule</h3><br>
+                <div id="periods-list">
+                    <!-- Periods injected here via JS -->
+                </div>
+
+                <div class="add-period-form">
+                    <div>
+                        <label>Name</label>
+                        <input type="text" id="new-p-name" placeholder="e.g. Period 1">
+                    </div>
+                    <div>
+                        <label>Start</label>
+                        <input type="time" id="new-p-start">
+                    </div>
+                    <div>
+                        <label>End</label>
+                        <input type="time" id="new-p-end">
+                    </div>
+                    <div style="flex: 100%;">
+                        <label>Days to Repeat</label>
+                        <div class="days-selector">
+                            <label><input type="checkbox" class="new-p-day" value="1" checked> M</label>
+                            <label><input type="checkbox" class="new-p-day" value="2" checked> T</label>
+                            <label><input type="checkbox" class="new-p-day" value="3" checked> W</label>
+                            <label><input type="checkbox" class="new-p-day" value="4" checked> Th</label>
+                            <label><input type="checkbox" class="new-p-day" value="5" checked> F</label>
+                        </div>
+                    </div>
+                    <div>
+                        <button onclick="addPeriod()">+ Add Period</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Default Configuration Structure ---
+        let config = {
+            schoolName: "OptiSigns Middle School",
+            preTransitionMin: 3, // Pulse warning 3 mins before class ends
+            lateMin: 2,          // Pulse late for 2 mins after class starts
+            periods: [
+                { id: 1, name: "Period 1", start: "08:00", end: "08:50", days: [1, 2, 3, 4, 5] },
+                { id: 2, name: "Period 2", start: "08:55", end: "09:45", days: [1, 2, 3, 4, 5] },
+                { id: 3, name: "Homeroom / Break", start: "09:45", end: "10:00", days: [1, 2, 3, 4, 5] }
+            ]
+        };
+
+        // --- Core Logic & Initialization ---
+        function init() {
+            loadSettings();
+            renderSettingsPanel();
+            updateDisplay();
+            // Update clock and check schedule every second
+            setInterval(updateDisplay, 1000);
+        }
+
+        // Modified loadSettings to check URL First, then LocalStorage
+        function loadSettings() {
+            // 1. Check if the URL contains schedule data
+            const urlParams = new URLSearchParams(window.location.search);
+            const dataParam = urlParams.get('data');
+
+            if (dataParam) {
+                try {
+                    // Decode the URL data back into a usable schedule
+                    config = JSON.parse(decodeURIComponent(atob(dataParam)));
+                    // Save it locally just in case
+                    localStorage.setItem('schoolSignageConfig', JSON.stringify(config));
+                    return; // Success!
+                } catch (e) {
+                    console.error("Failed to load schedule from URL", e);
+                }
+            }
+
+            // 2. If no URL data, fall back to the browser's saved memory
+            const saved = localStorage.getItem('schoolSignageConfig');
+            if (saved) {
+                config = JSON.parse(saved);
+            }
+        }
+
+        function saveSettings() {
+            config.schoolName = document.getElementById('input-school-name').value;
+            config.preTransitionMin = parseInt(document.getElementById('input-pre-min').value);
+            config.lateMin = parseInt(document.getElementById('input-late-min').value);
+
+            localStorage.setItem('schoolSignageConfig', JSON.stringify(config));
+            updateDisplay(); // Force UI update immediately
+        }
+
+        // Generates a URL with the schedule embedded inside it
+        function generateUrl() {
+            saveSettings(); // Make sure current settings are saved first
+
+            // Convert the schedule into a compressed Base64 string
+            const encodedData = btoa(encodeURIComponent(JSON.stringify(config)));
+
+            // Create the new URL
+            const newUrl = window.location.origin + window.location.pathname + "?data=" + encodedData;
+
+            // Copy it to the user's clipboard
+            navigator.clipboard.writeText(newUrl).then(() => {
+                alert("Link Copied!\n\nPaste this exact URL into OptiSigns. It contains your entire schedule permanently.");
+            }).catch(err => {
+                // Fallback if clipboard fails
+                prompt("Copy this link and paste it into OptiSigns:", newUrl);
+            });
+        }
+
+        // --- Clock & State Engine ---
+        function updateDisplay() {
+            const now = new Date();
+
+            // Render Time & Date
+            const timeString = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+            const dateString = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
+            document.getElementById('display-time').innerText = timeString;
+            document.getElementById('display-date').innerText = dateString;
+            document.getElementById('display-school-name').innerText = config.schoolName;
+
+            // Determine Schedule State
+            const states = determineStates(now);
+            applyVisualStates(states);
+        }
+
+        function determineStates(now) {
+            const currentDay = now.getDay(); // 0 = Sun, 1 = Mon...
+            const currentMin = now.getHours() * 60 + now.getMinutes();
+            const currentSecs = currentMin * 60 + now.getSeconds();
+
+            // Filter today's periods
+            let todaysPeriods = config.periods.filter(p => p.days.includes(currentDay));
+
+            // Sort chronologically
+            todaysPeriods.sort((a, b) => timeToMins(a.start) - timeToMins(b.start));
+
+            if (todaysPeriods.length === 0) {
+                return [{ type: 'DEFAULT', message: "No classes scheduled today.", urgency: 0 }];
+            }
+
+            let states = [];
+            let hasActive = false;
+
+            for (let p of todaysPeriods) {
+                let pStart = timeToMins(p.start);
+                let pEnd = timeToMins(p.end);
+
+                if (currentMin >= pStart && currentMin < pEnd) {
+                    hasActive = true;
+                    if (currentMin < pStart + config.lateMin) {
+                        states.push({ type: 'LATE', message: `Late for ${p.name}!`, countdown: "Hurry!", urgency: 4 });
+                    }
+                    else if (currentMin >= pEnd - config.preTransitionMin) {
+                        let diffSecs = (pEnd * 60) - currentSecs;
+                        states.push({ type: 'WARNING', message: `${p.name} ending soon`, countdown: formatCountdown(diffSecs), urgency: 3 });
+                    } else {
+                        states.push({ type: 'DEFAULT', message: `Current: ${p.name}`, countdown: `Ends at ${formatTimeStr(p.end)}`, urgency: 1 });
+                    }
+                }
+            }
+
+            // Find upcoming
+            let futurePeriods = todaysPeriods.filter(p => timeToMins(p.start) > currentMin);
+            if (futurePeriods.length > 0) {
+                let nextStartTime = Math.min(...futurePeriods.map(p => timeToMins(p.start)));
+                let nextPeriods = futurePeriods.filter(p => timeToMins(p.start) === nextStartTime);
+
+                // If there are active periods, only show upcoming transition if it's within 6 minutes (typical passing time buffer)
+                let diffMins = nextStartTime - currentMin;
+                if (!hasActive || diffMins <= 6) {
+                    for (let p of nextPeriods) {
+                        let diffSecs = (nextStartTime * 60) - currentSecs;
+                        if (diffSecs <= 40) {
+                            states.push({ type: 'TRANSITION_FINAL', message: `Transition to ${p.name}`, countdown: formatCountdown(diffSecs), urgency: 5 });
+                        } else {
+                            states.push({ type: 'TRANSITION', message: `Transition to ${p.name}`, countdown: formatCountdown(diffSecs), urgency: 2 });
+                        }
+                    }
+                }
+            }
+
+            if (states.length === 0) {
+                return [{ type: 'DEFAULT', message: "School is dismissed. Have a great day!", urgency: 0 }];
+            }
+
+            return states;
+        }
+
+        function applyVisualStates(states) {
+            const body = document.body;
+            const messageBox = document.getElementById('display-message-box');
+
+            // Determine highest urgency for background color
+            let highestUrgency = Math.max(...states.map(s => s.urgency || 0));
+
+            // Reset animations
+            body.className = '';
+            if (highestUrgency === 5) body.classList.add('state-transition-final');
+            else if (highestUrgency === 4) body.classList.add('state-late');
+            else if (highestUrgency === 3) body.classList.add('state-warning');
+            else if (highestUrgency === 2) body.classList.add('state-transition');
+
+            // Render all states
+            messageBox.innerHTML = states.map(state => `
+                <div class="state-row ${state.type.toLowerCase()}">
+                    <div class="status">${state.message || ""}</div>
+                    <div class="countdown">${state.countdown || ""}</div>
+                </div>
+            `).join('');
+        }
+
+        // --- Helper Functions ---
+        function timeToMins(timeStr) {
+            const [h, m] = timeStr.split(':').map(Number);
+            return h * 60 + m;
+        }
+
+        function formatTimeStr(timeStr) {
+            let [h, m] = timeStr.split(':').map(Number);
+            let ampm = h >= 12 ? 'PM' : 'AM';
+            h = h % 12;
+            h = h ? h : 12;
+            return `${h}:${m.toString().padStart(2, '0')} ${ampm}`;
+        }
+
+        function formatCountdown(totalSecs) {
+            const m = Math.floor(totalSecs / 60);
+            const s = totalSecs % 60;
+            return `${m}:${s.toString().padStart(2, '0')}`;
+        }
+
+        // --- Dashboard UI Logic ---
+        function toggleSettings() {
+            const panel = document.getElementById('settings-panel');
+            panel.style.display = panel.style.display === 'flex' ? 'none' : 'flex';
+            if (panel.style.display === 'flex') {
+                renderSettingsPanel();
+            }
+        }
+
+        function renderSettingsPanel() {
+            document.getElementById('input-school-name').value = config.schoolName;
+            document.getElementById('input-pre-min').value = config.preTransitionMin;
+            document.getElementById('input-late-min').value = config.lateMin;
+
+            const list = document.getElementById('periods-list');
+            list.innerHTML = '';
+
+            // Sort by start time for display
+            const sorted = [...config.periods].sort((a, b) => timeToMins(a.start) - timeToMins(b.start));
+
+            sorted.forEach(p => {
+                const dayMap = { 1: 'M', 2: 'T', 3: 'W', 4: 'Th', 5: 'F' };
+                const daysStr = p.days.map(d => dayMap[d]).join(',');
+
+                list.innerHTML += `
+                    <div class="period-item">
+                        <div>
+                            <strong>${p.name}</strong> 
+                            <span style="color:#94a3b8; font-size:1.5vmin; margin-left:1vmin;">(${formatTimeStr(p.start)} - ${formatTimeStr(p.end)}) [${daysStr}]</span>
+                        </div>
+                        <button class="btn-danger" onclick="deletePeriod(${p.id})">Remove</button>
+                    </div>
+                `;
+            });
+        }
+
+        function addPeriod() {
+            const name = document.getElementById('new-p-name').value;
+            const start = document.getElementById('new-p-start').value;
+            const end = document.getElementById('new-p-end').value;
+
+            const dayCheckboxes = document.querySelectorAll('.new-p-day:checked');
+            const days = Array.from(dayCheckboxes).map(cb => parseInt(cb.value));
+
+            if (!name || !start || !end || days.length === 0) {
+                alert("Please fill out all period fields and select at least one day.");
+                return;
+            }
+
+            config.periods.push({
+                id: Date.now(),
+                name, start, end, days
+            });
+
+            // Clear form
+            document.getElementById('new-p-name').value = '';
+            document.getElementById('new-p-start').value = '';
+            document.getElementById('new-p-end').value = '';
+
+            renderSettingsPanel();
+        }
+
+        function deletePeriod(id) {
+            config.periods = config.periods.filter(p => p.id !== id);
+            renderSettingsPanel();
+        }
+
+        // Boot
+        init();
+    </script>
+</body>
+
+</html>
